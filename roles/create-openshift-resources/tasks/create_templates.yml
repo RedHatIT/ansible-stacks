@@ -18,36 +18,20 @@
   - template.name is not defined or template.name == ''
   - template.filename is not defined or template.filename == ''
 
-- name: "Apply {{ template.name }} Remote Template with Parameters"
+- name: "Apply {{ template.filename }} Remote Template"
   command: >
-     bash -c "{{ openshift.common.client_binary }} process {{ template.name }} {{ template.parameters | oc_param_string }} | {{ openshift.common.client_binary }} apply -f - -n {{ project.name }}"
+     bash -c "{{ openshift.common.client_binary }} process {{ template.name }} {{ template.parameters|default([]) | oc_param_string }} {{ template.paramFiles|default([]) | oc_options_string('param-file') }} | {{ openshift.common.client_binary }} apply -f - -n {{ project.name }}"
   when:
-  - template.name is defined
-  - template.name != ''
-  - template.parameters is defined
-  - template.parameters | length > 0
+  - template.name is defined and template.name != ''
 
-- name: "Apply {{ template.name }} Remote Template without Parameters"
+- name: "Apply {{ template.filename }} Local Template"
   command: >
-     bash -c "{{ openshift.common.client_binary }} process {{ template.name }} | oc apply -f - -n {{ project.name }}"
+     bash -c "{{ openshift.common.client_binary }} process -f {{ template.filename }} {{ template.parameters|default([]) | oc_param_string }} {{ template.paramFiles|default([]) | oc_options_string('param-file') }} | {{ openshift.common.client_binary }} apply -f - -n {{ project.name }}"
   when:
-  - template.name is defined
-  - template.name != ''
-  - template.parameters is not defined or template.parameters | length == 0
+  - template.filename is defined and template.filename != ''
 
-- name: "Apply {{ template.filename }} Local Template with Parameters"
+- name: "Create ConfigMaps"
   command: >
-     bash -c "{{ openshift.common.client_binary }} process -f {{ template.filename }} {{ template.parameters | oc_param_string }} | {{ openshift.common.client_binary }} apply -f - -n {{ project.name }}"
+     bash -c "{{ openshift.common.client_binary }} create configmap {{ template.parameters.NAME }} {{ template.configMaps| oc_options_string('from-file') }} -o yaml --dry-run | {{ openshift.common.client_binary }} apply -f - -n {{ project.name }}"
   when:
-  - template.filename is defined
-  - template.filename != ''
-  - template.parameters is defined
-  - template.parameters | length > 0
-
-- name: "Apply {{ template.filename }} Local Template without Parameters"
-  command: >
-     bash -c "{{ openshift.common.client_binary }} process -f {{ template.filename }} | oc apply -f - -n {{ project.name }}"
-  when:
-  - template.filename is defined
-  - template.filename != ''
-  - template.parameters is not defined or template.parameters | length == 0
+  - template.configMaps is defined and template.configMaps | length > 0

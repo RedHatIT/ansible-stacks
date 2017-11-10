@@ -32,6 +32,13 @@ def create_env_string(key_value_pairs):
         string += " -e {}".format(pair)
     return string
 
+def create_options_string(list, option):
+    string = ""
+    for value in list:
+        if string != "": string += " "
+        string += "--%s=%s" % (option,value)
+    return string
+
 
 class FilterModule(object):
     ''' A set of general filters to support OpenShift CLI '''
@@ -39,5 +46,6 @@ class FilterModule(object):
         return {
             'key_value_pairs_string': create_key_value_pairs_string,
             'oc_param_string': create_param_string,
-            'oc_env_string': create_env_string
+            'oc_env_string': create_env_string,
+            'oc_options_string': create_options_string
         }
